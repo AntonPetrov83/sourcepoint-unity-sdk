@@ -29,7 +29,11 @@ namespace ConsentManagementProviderLib.Json
                                                     status: wrappedCcpa.status,
                                                     uspstring: wrappedCcpa.uspstring,
                                                     rejectedVendors: wrappedCcpa.rejectedVendors,
-                                                    rejectedCategories: wrappedCcpa.rejectedCategories);
+                                                    rejectedCategories: wrappedCcpa.rejectedCategories,
+                                                    childPmId: wrappedCcpa.childPmId,
+                                                    applies: wrappedCcpa.applies,
+                                                    signedLspa: wrappedCcpa.signedLspa,
+                                                    webConsentPayload: wrappedCcpa.webConsentPayload);
             return new SpCcpaConsent(unwrapped);
         }
 
@@ -45,15 +49,22 @@ namespace ConsentManagementProviderLib.Json
             foreach (KeyValuePair<string, Dictionary<string, object>> vendorGrantWrapper in wrappedGdpr.grants)
             {
                 Dictionary<string, bool> purposeGrants = new Dictionary<string, bool>();
-                if (vendorGrantWrapper.Value != null)
+                bool isGranted = false;
+
+                if (vendorGrantWrapper.Value.ContainsKey("granted"))
+                    isGranted = ((JsonElement)vendorGrantWrapper.Value["granted"]).GetBoolean();
+                if (vendorGrantWrapper.Value.ContainsKey("purposeGrants"))
                 {
-                    foreach (KeyValuePair<string, object> purpGrant in vendorGrantWrapper.Value) 
+                    JsonElement purposeGrantsElement = (JsonElement)vendorGrantWrapper.Value["purposeGrants"];
+                    foreach (JsonProperty purpGrant in purposeGrantsElement.EnumerateObject())
                     {
-                        purposeGrants.Add(purpGrant.Key, ((JsonElement)purpGrant.Value).GetBoolean());
+                        purposeGrants.Add(purpGrant.Name, purpGrant.Value.GetBoolean());
                     }
                 }
-                unwrapped.grants[vendorGrantWrapper.Key] = new SpVendorGrant(/*isGranted,*/ purposeGrants);
+
+                unwrapped.grants[vendorGrantWrapper.Key] = new SpVendorGrant(isGranted, purposeGrants);
             }
+            CmpDebugUtil.Log($"XXXXXXXXXXXXXXXXXXXXXXXX -> {unwrapped.ToFullString()}");
             return new SpGdprConsent(unwrapped);
         }
         
@@ -115,7 +126,7 @@ namespace ConsentManagementProviderLib.Json
                         purposeGrants.Add(purpGrant.Key, ((JsonElement)purpGrant.Value).GetBoolean());
                     }
                 }
-                unwrapped.grants[vendorGrantWrapper.Key] = new SpVendorGrant(/*isGranted,*/ purposeGrants);
+                unwrapped.grants[vendorGrantWrapper.Key] = new SpVendorGrant(isGranted, purposeGrants);
             }
             return unwrapped;
         }
@@ -130,10 +141,14 @@ namespace ConsentManagementProviderLib.Json
         private static CcpaConsent UnwrapCcpaConsent(CcpaConsentWrapper wrapped)
         {
             return new CcpaConsent(uuid: wrapped.uuid,
-                                   status: wrapped.status, 
-                                   uspstring: wrapped.uspstring, 
-                                   rejectedVendors: wrapped.rejectedVendors, 
-                                   rejectedCategories: wrapped.rejectedCategories);
+                                   status: wrapped.status,
+                                   uspstring: wrapped.uspstring,
+                                   rejectedVendors: wrapped.rejectedVendors,
+                                   rejectedCategories: wrapped.rejectedCategories,
+                                   childPmId: wrapped.childPmId,
+                                   applies: wrapped.applies,
+                                   signedLspa: wrapped.signedLspa,
+                                   webConsentPayload: wrapped.webConsentPayload);
         }
         #endregion
     }

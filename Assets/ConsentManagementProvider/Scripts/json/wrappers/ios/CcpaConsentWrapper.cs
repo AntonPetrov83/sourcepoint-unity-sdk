@@ -10,5 +10,9 @@ namespace ConsentManagementProviderLib.Json
         [JsonInclude] public string uspstring;
         [JsonInclude] public string[] rejectedVendors;
         [JsonInclude] public string[] rejectedCategories;
+        [JsonInclude] public string childPmId;
+        [JsonInclude] public bool applies;
+        [JsonInclude] public bool signedLspa;
+        [JsonInclude] public string webConsentPayload;
     }
 }
